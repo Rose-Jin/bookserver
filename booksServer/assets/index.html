@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>图书管理</title>
+    <link rel="stylesheet" href="./lib/bootstrap.css" />
+  </head>
+
+  <body style="padding: 15px">
+    <!-- 添加图书的Panel面板 -->
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">添加新图书</h3>
+      </div>
+      <div class="panel-body form-inline">
+        <div class="input-group">
+          <div class="input-group-addon">书名</div>
+          <input
+            type="text"
+            class="form-control"
+            id="iptBookname"
+            placeholder="请输入书名"
+          />
+        </div>
+
+        <div class="input-group">
+          <div class="input-group-addon">作者</div>
+          <input
+            type="text"
+            class="form-control"
+            id="iptAuthor"
+            placeholder="请输入作者"
+          />
+        </div>
+
+        <div class="input-group">
+          <div class="input-group-addon">出版社</div>
+          <input
+            type="text"
+            class="form-control"
+            id="iptPublisher"
+            placeholder="请输入出版社"
+          />
+        </div>
+
+        <button id="btnAdd" class="btn btn-primary">添加</button>
+      </div>
+    </div>
+
+    <!-- 图书的表格 -->
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>书名</th>
+          <th>作者</th>
+          <th>出版社</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tb">
+        <!-- <tr>
+        <td>1</td>
+        <td>史记</td>
+        <td>司马迁</td>
+        <td>河北出版社</td>
+        <td>
+          <a href="javascript:;" class="del">删除</a>
+        </tr> -->
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>斗破苍穹</td>
+        <td>天蚕土豆</td>
+        <td>网络
+          出版社</td>
+        <td>
+          <a href="javascript:;" class="del">删除</a>
+        </td>
+      </tbody>
+    </table>
+
+    <script src="./lib/jquery.js"></script>
+    <script src="./lib/axios.js"></script>
+    
+    <script>
+      // 1.1 写一段代码，请求接口，添加图书
+      $('#btnAdd').click(function () {
+        // 1.2 获取输入框的值（三个）
+        var bookname = $('#iptBookname').val().trim()
+        var author = $('#iptAuthor').val().trim()
+        var publisher = $('#iptPublisher').val().trim()
+        // 1.3 判断不能为空，如果有一个为空，提示并终止代码继续执行
+        if (bookname == '' || author == '' || publisher == '') {
+          return alert('内容不能为空')
+        }
+        // 1.4 按照接口文档，调用添加书籍的接口，完成添加
+        axios({
+          method: 'POST',
+          url: 'http://localhost:3000/api/book',
+          data: {
+            bookname: bookname,
+            author: author,
+            publisher: publisher,
+          },
+        }).then((res) => {
+          // 添加成功
+
+          console.log(res)
+          var obj = res.data.data // 接受后台返回插入成功的这个对象(带后台生成的id的)
+          console.log(obj)
+
+          $('#tb').prepend(
+            $(`<tr>
+                                <td>${obj.id}</td>
+                                <td>${obj.bookname}</td>
+                                <td>${obj.author}</td>
+                                <td>${obj.publisher}</td>
+                                <td>
+                                <a href="javascript:;" class="del" data-id="${obj.id}">删除</a>
+                                </td>
+                            </tr>`)
+          )
+        })
+      })
+
+      // 写一段代码，请求接口，获取所有的图书
+      function getBooks() {
+        $('#tb').empty()
+        // 把数据请求回来
+        axios({
+          url: 'http://localhost:3000/api/book',
+          method: 'GET',
+        }).then((res) => {
+          console.log(res)
+          // 提取数据 - 铺设页面
+          console.log(res.data.data)
+          $(res.data.data).each(function (index, obj) {
+            $('#tb').prepend(
+              $(`<tr>
+                                <td>${obj.id}</td>
+                                <td>${obj.bookname}</td>
+                                <td>${obj.author}</td>
+                                <td>${obj.publisher}</td>
+                                <td>
+                                <a href="javascript:;" class="del" data-id="${obj.id}">删除</a>
+                                </td>
+                            </tr>`)
+            )
+          })
+        })
+      }
+
+      // 1.5 网页打开 - 到这里直接调用
+      getBooks()
+
+      // // 3.1 因为a是动态创建的, 所以在这里要执行 - 只能用事件委托, 不然得写在getBoods里面的下面 再绑定, 代码写在一起不好
+      $('#tb').on('click', '.del', function () {
+        // 3.2 对于敏感操作，最好给一个提示（询问是否要删除）
+        if (!confirm('你确定要删除吗，你好狠！')) {
+          return
+        }
+        // 3.3 如果确定是删除，按照接口，完成接口的要求
+        var id = $(this).attr('data-id')
+        console.log(id)
+        axios({
+          method: 'DELETE',
+          url: 'http://localhost:3000/api/book/' + id,
+        }).then((res) => {
+          getBooks()
+        })
+      })
+    </script>
+  </body>
+</html>
